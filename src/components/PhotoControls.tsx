@@ -59,7 +59,7 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
   return (
     <div className="w-full space-y-5 bg-white p-5 sm:p-6 rounded-2xl border border-pink-100 shadow-xs">
       
-      {/* 1. BEST WISHES FROM - TYPE NAME INPUT (AUTOFIT) */}
+      {/* 1. BEST WISHES FROM - TYPE NAME INPUT (1 OR 2 LINES AUTOFIT) */}
       <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-pink-50/70 to-amber-50/50 border border-purple-200/80 space-y-2.5 shadow-2xs">
         <div className="flex items-center justify-between">
           <label 
@@ -72,25 +72,40 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
             <span>Best Wishes From — Type Your Name:</span>
           </label>
           <span className="text-[11px] text-slate-400 font-mono">
-            {photoState.customName.length}/45
+            {photoState.customName.length}/60
           </span>
         </div>
 
         <div className="relative">
-          <input
+          <textarea
             id="custom-name-input"
-            type="text"
-            maxLength={45}
+            rows={2}
+            maxLength={60}
             value={photoState.customName}
-            onChange={(e) => onCustomNameChange(e.target.value)}
-            placeholder="e.g. Cardoza Family / Your Name"
-            className="w-full px-4 py-2.5 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-[#18215B] placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#A00055]/30 focus:border-[#A00055] transition-all shadow-2xs"
+            onChange={(e) => {
+              const lines = e.target.value.split('\n');
+              if (lines.length > 2) {
+                onCustomNameChange(lines.slice(0, 2).join('\n'));
+              } else {
+                onCustomNameChange(e.target.value);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const lines = photoState.customName.split('\n');
+                if (lines.length >= 2) {
+                  e.preventDefault();
+                }
+              }
+            }}
+            placeholder={"e.g. Cardoza Family\n(or press Enter for 2nd line)"}
+            className="w-full px-4 py-2 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-[#18215B] placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#A00055]/30 focus:border-[#A00055] transition-all shadow-2xs resize-none"
           />
           {photoState.customName && (
             <button
               type="button"
               onClick={() => onCustomNameChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
               title="Clear name"
             >
               ✕
@@ -100,7 +115,7 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
 
         <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
           <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-          <span>Your name dynamically auto-fits inside the official event frame.</span>
+          <span>Auto-fits in center (supports 1 or 2 lines — press Enter for line 2).</span>
         </p>
       </div>
 

@@ -10,48 +10,138 @@ export const FRAME_CONFIG: FrameConfig = {
 };
 
 /**
+ * Splits a text into two balanced lines at the optimal word boundary.
+ */
+function splitIntoTwoBalancedLines(text: string): [string, string] {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= 1) return [text, ''];
+
+  let bestDiff = Infinity;
+  let bestSplit = 1;
+
+  for (let i = 1; i < words.length; i++) {
+    const l1 = words.slice(0, i).join(' ');
+    const l2 = words.slice(i).join(' ');
+    const diff = Math.abs(l1.length - l2.length);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestSplit = i;
+    }
+  }
+
+  return [
+    words.slice(0, bestSplit).join(' '),
+    words.slice(bestSplit).join(' ')
+  ];
+}
+
+/**
  * Renders dynamically auto-fitted text centered inside the "BEST WISHES FROM" purple pill.
+ * Supports 1 or 2 lines with precision horizontal and vertical centering at Y = 936.5.
  */
 function renderCustomNameText(
   ctx: CanvasRenderingContext2D,
-  name: string,
+  rawName: string,
   centerX: number,
   centerY: number,
   maxWidth: number,
   maxHeight: number,
   scaleRatio: number
 ): void {
-  const text = name.trim();
-  if (!text) return;
+  const trimmed = rawName.trim();
+  if (!trimmed) return;
 
-  // Maximum starting font size
-  let fontSize = 40 * scaleRatio;
-  const minFontSize = 14 * scaleRatio;
-  const targetMaxWidth = maxWidth * 0.92; // Keep generous side margins
+  // 1. Determine line structure: respect explicit newlines or auto-split long text
+  const explicitLines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  let lines: string[] = [];
+
+  if (explicitLines.length >= 2) {
+    // User explicitly broke into 2 lines
+    lines = explicitLines.slice(0, 2);
+  } else if (explicitLines.length === 1) {
+    const single = explicitLines[0];
+    // Check if single line fits comfortably at a legible font size (>= 25px)
+    ctx.save();
+    ctx.font = `bold ${25 * scaleRatio}px 'Outfit', 'Poppins', sans-serif`;
+    const singleWidth = ctx.measureText(single).width;
+    ctx.restore();
+
+    const targetMaxWidth = maxWidth * 0.92;
+    if (singleWidth <= targetMaxWidth) {
+      lines = [single];
+    } else {
+      // If too long for a single line at >= 25px, auto-split into 2 balanced lines if multi-word
+      const words = single.split(/\s+/).filter(Boolean);
+      if (words.length > 1) {
+        lines = splitIntoTwoBalancedLines(single);
+      } else {
+        lines = [single];
+      }
+    }
+  }
+
+  if (lines.length === 0) return;
 
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Measure text width and scale down dynamically to fit width & height
-  ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
-  let measuredWidth = ctx.measureText(text).width;
-
-  while ((measuredWidth > targetMaxWidth || fontSize > maxHeight * 0.72) && fontSize > minFontSize) {
-    fontSize -= 1 * scaleRatio;
-    ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
-    measuredWidth = ctx.measureText(text).width;
-  }
-
-  // Soft high-contrast drop shadow for maximum legibility on dark purple pill
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-  ctx.shadowBlur = 5 * scaleRatio;
+  // Crisp high-contrast drop shadow for maximum legibility on dark purple background
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+  ctx.shadowBlur = 4 * scaleRatio;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 2 * scaleRatio;
-
-  // Draw clean, bright white text perfectly centered
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(text, centerX, centerY);
+
+  if (lines.length === 1) {
+    // SINGLE LINE MODE
+    let fontSize = 38 * scaleRatio;
+    const minFontSize = 14 * scaleRatio;
+    const targetMaxWidth = maxWidth * 0.92;
+
+    ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
+    let measuredWidth = ctx.measureText(lines[0]).width;
+
+    while (
+      (measuredWidth > targetMaxWidth || fontSize > maxHeight * 0.75) &&
+      fontSize > minFontSize
+    ) {
+      fontSize -= 0.5 * scaleRatio;
+      ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
+      measuredWidth = ctx.measureText(lines[0]).width;
+    }
+
+    // Exactly centered horizontally at centerX and vertically at centerY
+    ctx.fillText(lines[0], centerX, centerY);
+  } else {
+    // TWO LINES MODE
+    let fontSize = 24 * scaleRatio;
+    const minFontSize = 12 * scaleRatio;
+    const targetMaxWidth = maxWidth * 0.88; // Extra margin for top/bottom curves of pill
+
+    ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
+    let w1 = ctx.measureText(lines[0]).width;
+    let w2 = ctx.measureText(lines[1]).width;
+    let lineHeight = fontSize * 1.22;
+
+    while (
+      (w1 > targetMaxWidth || w2 > targetMaxWidth || (lineHeight + fontSize) > maxHeight * 0.92) &&
+      fontSize > minFontSize
+    ) {
+      fontSize -= 0.5 * scaleRatio;
+      ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
+      w1 = ctx.measureText(lines[0]).width;
+      w2 = ctx.measureText(lines[1]).width;
+      lineHeight = fontSize * 1.22;
+    }
+
+    // Both lines vertically centered around centerY
+    const y1 = centerY - (lineHeight / 2);
+    const y2 = centerY + (lineHeight / 2);
+
+    ctx.fillText(lines[0], centerX, y1);
+    ctx.fillText(lines[1], centerX, y2);
+  }
 
   ctx.restore();
 }
@@ -159,10 +249,10 @@ export function renderFrameComposition(
   }
 
   // 5. Render auto-fitting Custom Name exactly centered inside "BEST WISHES FROM" purple pill
-  const boxCenterX = 512 * scaleRatio; // Exact horizontal center
-  const boxCenterY = 920 * scaleRatio; // Exact vertical center
-  const boxMaxWidth = 450 * scaleRatio;
-  const boxMaxHeight = 85 * scaleRatio;
+  const boxCenterX = 512 * scaleRatio; // Exact horizontal center of pill and canvas
+  const boxCenterY = 936.5 * scaleRatio; // Exact vertical center of purple pill (bounds: y=896 to y=975)
+  const boxMaxWidth = 440 * scaleRatio; // Usable width between ribbon ends (x=295 to x=735)
+  const boxMaxHeight = 76 * scaleRatio; // Usable height inside purple pill
 
   if (photoState.customName && photoState.customName.trim()) {
     renderCustomNameText(
