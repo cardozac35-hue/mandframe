@@ -3,7 +3,7 @@
 A production-ready, responsive web application for the **First World Konkani Music Mega Convention 2026**, organized by **Mandd Sobhann** (3rd–15th November 2026 at Town Hall, Mangalore).
 
 **Developed by TechHarmonix Consulting Pvt. Ltd.**
-
+    
 ---
 
 ## 🌟 Key Features
