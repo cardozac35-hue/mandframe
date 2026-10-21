@@ -92,22 +92,26 @@ export const Hero: React.FC<HeroProps> = ({ onScrollToEditor }) => {
 
           </div>
 
-          {/* Right Column: Official Event Frame Preview */}
+          {/* Right Column: Complete Official Event Frame Showcase (Uncut) */}
           <div className="lg:col-span-5 flex justify-center">
-            <div className="relative group max-w-xs sm:max-w-sm w-full">
-              {/* Outer decorative glow ring */}
-              <div className="absolute -inset-4 bg-gradient-to-tr from-[#A00055] via-[#D41472] to-[#D9A52E] rounded-full blur-xl opacity-25 group-hover:opacity-40 transition duration-700"></div>
+            <div className="relative group max-w-sm sm:max-w-md w-full">
+              {/* Outer decorative glow */}
+              <div className="absolute -inset-4 bg-gradient-to-tr from-[#A00055]/20 via-[#D41472]/15 to-[#D9A52E]/20 rounded-3xl blur-2xl opacity-60 group-hover:opacity-80 transition duration-700"></div>
               
-              <div className="relative rounded-full p-2 bg-white shadow-2xl shadow-[#A00055]/20 border-4 border-amber-200/80">
-                <div className="rounded-full overflow-hidden aspect-square relative flex items-center justify-center bg-white">
-                  
-                  {/* Official Event Frame Artwork */}
+              {/* Showcase Card that displays the complete frame without clipping the bottom rim or wing tips */}
+              <div className="relative rounded-3xl p-4 sm:p-6 bg-white shadow-2xl shadow-[#A00055]/15 border border-pink-100 flex flex-col items-center">
+                <div className="w-full aspect-square relative flex items-center justify-center">
                   <img 
                     src="/assets/event-logo.png" 
                     alt="Official First World Konkani Music Mega Convention Frame"
-                    className="w-full h-full object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none drop-shadow-md select-none"
                   />
-
+                </div>
+                <div className="mt-3 text-center">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A00055] bg-pink-50 px-3 py-1 rounded-full border border-pink-200">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Official Event Frame Preview</span>
+                  </span>
                 </div>
               </div>
             </div>
