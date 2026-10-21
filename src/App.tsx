@@ -9,13 +9,15 @@ import { DownloadButton } from './components/DownloadButton';
 import { WhatsAppShareButton } from './components/WhatsAppShareButton';
 import { AboutEvent } from './components/AboutEvent';
 import { Footer } from './components/Footer';
-import { PhotoState } from './types';
+import { PhotoState, FrameType } from './types';
 import { FRAME_CONFIG } from './utils/imageComposition';
 import { loadImageFromUrl } from './utils/imageValidation';
-import { Sparkles, Info, ShieldCheck, CheckCircle2, Eye } from 'lucide-react';
+import { Sparkles, Eye, ShieldCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [overlayImage, setOverlayImage] = useState<HTMLImageElement | null>(null);
+  // Preloaded frame overlay images
+  const [overlayParticipant, setOverlayParticipant] = useState<HTMLImageElement | null>(null);
+  const [overlayWishes, setOverlayWishes] = useState<HTMLImageElement | null>(null);
   const [overlayLoading, setOverlayLoading] = useState(true);
   const [overlayError, setOverlayError] = useState<string | null>(null);
 
@@ -32,6 +34,8 @@ export const App: React.FC = () => {
     rotation: 0,
     cornerBackground: 'transparent',
     showGoldenBorder: false,
+    frameType: 'wishes', // Default to the newly requested Best Wishes frame!
+    customName: '',
   });
 
   const [isPhotoLoading, setIsPhotoLoading] = useState(false);
@@ -44,22 +48,26 @@ export const App: React.FC = () => {
     editorSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Load foreground event frame overlay on startup
+  // Pre-load both frame overlays on startup
   useEffect(() => {
     let isMounted = true;
     setOverlayLoading(true);
 
-    loadImageFromUrl(FRAME_CONFIG.overlaySrc)
-      .then((img) => {
+    Promise.all([
+      loadImageFromUrl(FRAME_CONFIG.overlayParticipantSrc),
+      loadImageFromUrl(FRAME_CONFIG.overlayWishesSrc),
+    ])
+      .then(([imgParticipant, imgWishes]) => {
         if (isMounted) {
-          setOverlayImage(img);
+          setOverlayParticipant(imgParticipant);
+          setOverlayWishes(imgWishes);
           setOverlayLoading(false);
         }
       })
       .catch((err) => {
         if (isMounted) {
-          console.error('Failed to load frame overlay:', err);
-          setOverlayError('Failed to load official frame artwork. Please refresh the page.');
+          console.error('Failed to load frame overlays:', err);
+          setOverlayError('Failed to load official frame artworks. Please refresh the page.');
           setOverlayLoading(false);
         }
       });
@@ -69,14 +77,17 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Determine which overlay is active
+  const currentOverlay = photoState.frameType === 'wishes' ? overlayWishes : overlayParticipant;
+
   // Handle newly selected photo
   const handlePhotoLoaded = (file: File | null, img: HTMLImageElement, url: string) => {
-    // Revoke previous blob URL if exists to avoid memory leak
     if (photoState.imageUrl && photoState.imageUrl.startsWith('blob:')) {
       URL.revokeObjectURL(photoState.imageUrl);
     }
 
-    setPhotoState({
+    setPhotoState((prev) => ({
+      ...prev,
       file,
       imageUrl: url,
       imageElement: img,
@@ -86,9 +97,7 @@ export const App: React.FC = () => {
       panX: 0,
       panY: 0,
       rotation: 0,
-      cornerBackground: photoState.cornerBackground,
-      showGoldenBorder: photoState.showGoldenBorder,
-    });
+    }));
   };
 
   // Transformation handlers
@@ -126,6 +135,14 @@ export const App: React.FC = () => {
     setPhotoState((prev) => ({ ...prev, showGoldenBorder: !prev.showGoldenBorder }));
   };
 
+  const handleFrameTypeChange = (frameType: FrameType) => {
+    setPhotoState((prev) => ({ ...prev, frameType }));
+  };
+
+  const handleCustomNameChange = (customName: string) => {
+    setPhotoState((prev) => ({ ...prev, customName }));
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF9FC] text-slate-800">
       
@@ -155,7 +172,7 @@ export const App: React.FC = () => {
               Personalize Your Event Badge
             </h2>
             <p className="text-sm sm:text-base text-slate-600">
-              Place your photo inside the circular window, fine-tune your zoom and position, and download your 1024×1024 high-resolution image.
+              Choose between <strong>"Proudly Participating"</strong> or <strong>"Best Wishes From"</strong> (with your custom name), adjust your framing, and download your high-resolution PNG.
             </p>
           </div>
 
@@ -174,7 +191,7 @@ export const App: React.FC = () => {
               <div className="sticky top-28 w-full flex flex-col items-center">
                 <FramePreview
                   photoState={photoState}
-                  overlayImage={overlayImage}
+                  overlayImage={currentOverlay}
                   onPanChange={handlePanChange}
                   onScaleChange={handleScaleChange}
                 />
@@ -186,7 +203,7 @@ export const App: React.FC = () => {
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#A00055] transition-colors cursor-pointer bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-xs"
                   >
                     <Eye className="w-3.5 h-3.5 text-[#A00055]" />
-                    <span>View Official Reference Artwork</span>
+                    <span>View Official Reference Frames</span>
                   </button>
                 </div>
               </div>
@@ -201,7 +218,7 @@ export const App: React.FC = () => {
                   <span className="w-5 h-5 rounded-full bg-[#A00055] text-white flex items-center justify-center text-[10px]">
                     1
                   </span>
-                  <span>Choose Your Photo</span>
+                  <span>Upload Your Photo</span>
                 </div>
 
                 <PhotoUploader
@@ -212,13 +229,13 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              {/* 2. Photo Controls (Zoom, Pan, Rotate, Styling) */}
+              {/* 2. Photo Controls (Frame Selection, Custom Name, Zoom, Pan, Rotate) */}
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-[#A00055] px-1 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#A00055] text-white flex items-center justify-center text-[10px]">
                     2
                   </span>
-                  <span>Adjust Position & Scale</span>
+                  <span>Frame Design & Position Adjustments</span>
                 </div>
 
                 <PhotoControls
@@ -229,6 +246,8 @@ export const App: React.FC = () => {
                   onResetAll={handleResetAll}
                   onCornerBackgroundChange={handleCornerBackgroundChange}
                   onToggleGoldenBorder={handleToggleGoldenBorder}
+                  onFrameTypeChange={handleFrameTypeChange}
+                  onCustomNameChange={handleCustomNameChange}
                 />
               </div>
 
@@ -244,12 +263,12 @@ export const App: React.FC = () => {
                 <div className="space-y-3">
                   <DownloadButton
                     photoState={photoState}
-                    overlayImage={overlayImage}
+                    overlayImage={currentOverlay}
                   />
 
                   <WhatsAppShareButton
                     photoState={photoState}
-                    overlayImage={overlayImage}
+                    overlayImage={currentOverlay}
                   />
                 </div>
 
@@ -273,14 +292,14 @@ export const App: React.FC = () => {
       {/* Official Reference Artwork Modal */}
       {showArtworkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-pink-100 max-h-[90vh] overflow-y-auto space-y-6">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-pink-100 max-h-[90vh] overflow-y-auto space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-[#18215B] font-['Outfit',sans-serif]">
-                  Supplied Official Reference Artwork
+                  Supplied Official Reference Frames
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Preserved authentic Mandd Sobhann design assets
+                  Preserved authentic Mandd Sobhann design templates
                 </p>
               </div>
               <button
@@ -291,32 +310,32 @@ export const App: React.FC = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <div className="text-xs font-bold text-slate-700">Reference 1: Original Event Frame</div>
-                <div className="aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white p-1">
+                <div className="text-xs font-bold text-[#18215B]">Frame 1: "Proudly Participating"</div>
+                <div className="aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-white p-2 shadow-xs">
                   <img 
-                    src="/assets/event-frame-white.jpg" 
-                    alt="Original White Background Reference"
+                    src="/assets/event-frame-overlay.png" 
+                    alt="Frame 1: Proudly Participating"
                     className="w-full h-full object-contain"
                   />
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Official artwork with original Mandd Sobhann logo, text, ribbons, church, and treble clef.
+                  Official badge with church illustration, vinyl record, and Mandd Sobhann logo.
                 </p>
               </div>
 
               <div className="space-y-2">
-                <div className="text-xs font-bold text-slate-700">Reference 2: Cloud Photo Placeholder</div>
-                <div className="aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white p-1">
+                <div className="text-xs font-bold text-[#18215B]">Frame 2: "Best Wishes From"</div>
+                <div className="aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-white p-2 shadow-xs">
                   <img 
-                    src="/assets/event-frame-placeholder.jpg" 
-                    alt="Cloud Placeholder Reference"
+                    src="/assets/event-frame-wishes-overlay.png" 
+                    alt="Frame 2: Best Wishes From"
                     className="w-full h-full object-contain"
                   />
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Template reference defining the circular photo window geometry (center 512, 512; radius 512).
+                  Greetings frame with sunset, sailboat, and custom name typing area.
                 </p>
               </div>
             </div>

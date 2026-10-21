@@ -6,10 +6,55 @@ export const FRAME_CONFIG: FrameConfig = {
   circleCenterX: 512,
   circleCenterY: 512,
   circleRadius: 512,
-  overlaySrc: '/assets/event-frame-overlay.png',
+  overlayParticipantSrc: '/assets/event-frame-overlay.png',
+  overlayWishesSrc: '/assets/event-frame-wishes-overlay.png',
   originalWhiteSrc: '/assets/event-frame-white.jpg',
   placeholderSrc: '/assets/event-frame-placeholder.jpg',
 };
+
+/**
+ * Helper to render auto-fitted text inside the "BEST WISHES FROM" name box.
+ */
+function renderCustomNameText(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  centerX: number,
+  centerY: number,
+  maxWidth: number,
+  scaleRatio: number
+): void {
+  const displayText = name.trim();
+  if (!displayText) return;
+
+  const baseFontSize = 38 * scaleRatio;
+  let fontSize = baseFontSize;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Measure text and scale down if it exceeds maximum width
+  ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
+  let textWidth = ctx.measureText(displayText).width;
+
+  while (textWidth > maxWidth && fontSize > 16 * scaleRatio) {
+    fontSize -= 1.5 * scaleRatio;
+    ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
+    textWidth = ctx.measureText(displayText).width;
+  }
+
+  // Soft elegant drop shadow for readability on dark purple gradient
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+  ctx.shadowBlur = 6 * scaleRatio;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2 * scaleRatio;
+
+  // Render text in clean bright white
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(displayText, centerX, centerY);
+
+  ctx.restore();
+}
 
 /**
  * Draws the personalized event photo frame onto any 2D canvas context.
@@ -70,7 +115,7 @@ export function renderFrameComposition(
 
     // Apply translation, rotation, and drawing
     const renderCenterX = cx + (photoState.panX * scaleRatio);
-    const renderCenterY = (cy - (30 * scaleRatio)) + (photoState.panY * scaleRatio); // slight natural offset towards upper circular window
+    const renderCenterY = (cy - (30 * scaleRatio)) + (photoState.panY * scaleRatio);
 
     ctx.translate(renderCenterX, renderCenterY);
 
@@ -113,7 +158,34 @@ export function renderFrameComposition(
     ctx.restore();
   }
 
-  // 5. Optional full golden circular border if enabled by user
+  // 5. If Frame 2 ("Best Wishes From") is selected, render custom name
+  if (photoState.frameType === 'wishes') {
+    const boxCenterX = 500 * scaleRatio;
+    const boxCenterY = 915 * scaleRatio;
+    const boxMaxWidth = 430 * scaleRatio;
+
+    if (photoState.customName && photoState.customName.trim()) {
+      renderCustomNameText(
+        ctx,
+        photoState.customName,
+        boxCenterX,
+        boxCenterY,
+        boxMaxWidth,
+        scaleRatio
+      );
+    } else {
+      // Subtle hint if name is currently empty
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `italic 500 ${22 * scaleRatio}px 'Outfit', 'Poppins', sans-serif`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fillText('(Type your name below)', boxCenterX, boxCenterY);
+      ctx.restore();
+    }
+  }
+
+  // 6. Optional full golden circular border if enabled by user
   if (photoState.showGoldenBorder) {
     ctx.save();
     ctx.beginPath();
