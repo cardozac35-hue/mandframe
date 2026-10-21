@@ -10,7 +10,7 @@ export const FRAME_CONFIG: FrameConfig = {
 };
 
 /**
- * Renders dynamically auto-fitted text inside the "BEST WISHES FROM" purple box.
+ * Renders dynamically auto-fitted text centered inside the "BEST WISHES FROM" purple pill.
  */
 function renderCustomNameText(
   ctx: CanvasRenderingContext2D,
@@ -25,9 +25,9 @@ function renderCustomNameText(
   if (!text) return;
 
   // Maximum starting font size
-  let fontSize = 42 * scaleRatio;
+  let fontSize = 40 * scaleRatio;
   const minFontSize = 14 * scaleRatio;
-  const targetMaxWidth = maxWidth * 0.94; // Keep comfortable horizontal margin
+  const targetMaxWidth = maxWidth * 0.92; // Keep generous side margins
 
   ctx.save();
   ctx.textAlign = 'center';
@@ -37,7 +37,7 @@ function renderCustomNameText(
   ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
   let measuredWidth = ctx.measureText(text).width;
 
-  while ((measuredWidth > targetMaxWidth || fontSize > maxHeight * 0.75) && fontSize > minFontSize) {
+  while ((measuredWidth > targetMaxWidth || fontSize > maxHeight * 0.72) && fontSize > minFontSize) {
     fontSize -= 1 * scaleRatio;
     ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
     measuredWidth = ctx.measureText(text).width;
@@ -49,7 +49,7 @@ function renderCustomNameText(
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 2 * scaleRatio;
 
-  // Draw clean, bright white text
+  // Draw clean, bright white text perfectly centered
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(text, centerX, centerY);
 
@@ -158,11 +158,11 @@ export function renderFrameComposition(
     ctx.restore();
   }
 
-  // 5. Render auto-fitting Custom Name inside "BEST WISHES FROM" purple box
-  const boxCenterX = 500 * scaleRatio;
-  const boxCenterY = 915 * scaleRatio;
-  const boxMaxWidth = 440 * scaleRatio;
-  const boxMaxHeight = 80 * scaleRatio;
+  // 5. Render auto-fitting Custom Name exactly centered inside "BEST WISHES FROM" purple pill
+  const boxCenterX = 512 * scaleRatio; // Exact horizontal center
+  const boxCenterY = 920 * scaleRatio; // Exact vertical center
+  const boxMaxWidth = 450 * scaleRatio;
+  const boxMaxHeight = 85 * scaleRatio;
 
   if (photoState.customName && photoState.customName.trim()) {
     renderCustomNameText(
