@@ -36,7 +36,7 @@ export const Hero: React.FC<HeroProps> = ({ onScrollToEditor }) => {
                 Create Your <span className="bg-gradient-to-r from-[#A00055] via-[#D41472] to-[#D9A52E] bg-clip-text text-transparent">Event Photo Frame</span>
               </h1>
               <p className="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
-                Celebrate Konkani music and be part of history! Add your photo to the official event frame and share your participation with the world.
+                Send your warm greetings and best wishes! Add your photo to the official convention frame, type your name, and share your celebration with the world.
               </p>
             </div>
 
@@ -86,31 +86,31 @@ export const Hero: React.FC<HeroProps> = ({ onScrollToEditor }) => {
 
               <div className="text-xs font-medium text-slate-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>100% Free • No Sign-up Needed • Instant Download</span>
+                <span>100% Free • Custom Name • Instant Download</span>
               </div>
             </div>
 
           </div>
 
-          {/* Right Column: Complete Official Event Frame Showcase (Uncut) */}
+          {/* Right Column: Complete Official Best Wishes Frame Showcase */}
           <div className="lg:col-span-5 flex justify-center">
             <div className="relative group max-w-sm sm:max-w-md w-full">
               {/* Outer decorative glow */}
               <div className="absolute -inset-4 bg-gradient-to-tr from-[#A00055]/20 via-[#D41472]/15 to-[#D9A52E]/20 rounded-3xl blur-2xl opacity-60 group-hover:opacity-80 transition duration-700"></div>
               
-              {/* Showcase Card that displays the complete frame without clipping the bottom rim or wing tips */}
+              {/* Showcase Card that displays the complete frame */}
               <div className="relative rounded-3xl p-4 sm:p-6 bg-white shadow-2xl shadow-[#A00055]/15 border border-pink-100 flex flex-col items-center">
                 <div className="w-full aspect-square relative flex items-center justify-center">
                   <img 
-                    src="/assets/event-logo.png" 
-                    alt="Official First World Konkani Music Mega Convention Frame"
+                    src="/assets/event-frame-wishes-overlay.png" 
+                    alt="Official First World Konkani Music Mega Convention Best Wishes Frame"
                     className="w-full h-full object-contain pointer-events-none drop-shadow-md select-none"
                   />
                 </div>
                 <div className="mt-3 text-center">
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A00055] bg-pink-50 px-3 py-1 rounded-full border border-pink-200">
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Official Event Frame Preview</span>
+                    <span>Official "Best Wishes From" Frame</span>
                   </span>
                 </div>
               </div>

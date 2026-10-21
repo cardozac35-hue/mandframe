@@ -1,5 +1,3 @@
-export type FrameType = 'participant' | 'wishes';
-
 export interface PhotoState {
   file: File | null;
   imageUrl: string | null;
@@ -12,8 +10,7 @@ export interface PhotoState {
   rotation: number;     // 0, 90, 180, 270 degrees
   cornerBackground: 'transparent' | 'white'; // Transparent PNG or clean white corners
   showGoldenBorder: boolean; // Optional full circle gold accent
-  frameType: FrameType; // 'participant' or 'wishes'
-  customName: string;   // For 'wishes' frame ("BEST WISHES FROM")
+  customName: string;   // Typed name for "BEST WISHES FROM" box
 }
 
 export interface FrameConfig {
@@ -22,10 +19,7 @@ export interface FrameConfig {
   readonly circleCenterX: number;
   readonly circleCenterY: number;
   readonly circleRadius: number;
-  readonly overlayParticipantSrc: string;
-  readonly overlayWishesSrc: string;
-  readonly originalWhiteSrc: string;
-  readonly placeholderSrc: string;
+  readonly overlaySrc: string;
 }
 
 export type DownloadStatus = 'idle' | 'preparing' | 'ready' | 'error';

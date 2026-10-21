@@ -6,14 +6,11 @@ export const FRAME_CONFIG: FrameConfig = {
   circleCenterX: 512,
   circleCenterY: 512,
   circleRadius: 512,
-  overlayParticipantSrc: '/assets/event-frame-overlay.png',
-  overlayWishesSrc: '/assets/event-frame-wishes-overlay.png',
-  originalWhiteSrc: '/assets/event-frame-white.jpg',
-  placeholderSrc: '/assets/event-frame-placeholder.jpg',
+  overlaySrc: '/assets/event-frame-wishes-overlay.png',
 };
 
 /**
- * Helper to render auto-fitted text inside the "BEST WISHES FROM" name box.
+ * Renders dynamically auto-fitted text inside the "BEST WISHES FROM" purple box.
  */
 function renderCustomNameText(
   ctx: CanvasRenderingContext2D,
@@ -21,37 +18,40 @@ function renderCustomNameText(
   centerX: number,
   centerY: number,
   maxWidth: number,
+  maxHeight: number,
   scaleRatio: number
 ): void {
-  const displayText = name.trim();
-  if (!displayText) return;
+  const text = name.trim();
+  if (!text) return;
 
-  const baseFontSize = 38 * scaleRatio;
-  let fontSize = baseFontSize;
+  // Maximum starting font size
+  let fontSize = 42 * scaleRatio;
+  const minFontSize = 14 * scaleRatio;
+  const targetMaxWidth = maxWidth * 0.94; // Keep comfortable horizontal margin
 
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Measure text and scale down if it exceeds maximum width
+  // Measure text width and scale down dynamically to fit width & height
   ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
-  let textWidth = ctx.measureText(displayText).width;
+  let measuredWidth = ctx.measureText(text).width;
 
-  while (textWidth > maxWidth && fontSize > 16 * scaleRatio) {
-    fontSize -= 1.5 * scaleRatio;
+  while ((measuredWidth > targetMaxWidth || fontSize > maxHeight * 0.75) && fontSize > minFontSize) {
+    fontSize -= 1 * scaleRatio;
     ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
-    textWidth = ctx.measureText(displayText).width;
+    measuredWidth = ctx.measureText(text).width;
   }
 
-  // Soft elegant drop shadow for readability on dark purple gradient
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-  ctx.shadowBlur = 6 * scaleRatio;
+  // Soft high-contrast drop shadow for maximum legibility on dark purple pill
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+  ctx.shadowBlur = 5 * scaleRatio;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 2 * scaleRatio;
 
-  // Render text in clean bright white
+  // Draw clean, bright white text
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(displayText, centerX, centerY);
+  ctx.fillText(text, centerX, centerY);
 
   ctx.restore();
 }
@@ -149,7 +149,7 @@ export function renderFrameComposition(
     ctx.restore();
   }
 
-  // 4. Draw foreground event artwork overlay
+  // 4. Draw foreground event artwork overlay ("Best Wishes From" frame)
   if (overlayImage && overlayImage.complete) {
     ctx.save();
     ctx.imageSmoothingEnabled = true;
@@ -158,31 +158,22 @@ export function renderFrameComposition(
     ctx.restore();
   }
 
-  // 5. If Frame 2 ("Best Wishes From") is selected, render custom name
-  if (photoState.frameType === 'wishes') {
-    const boxCenterX = 500 * scaleRatio;
-    const boxCenterY = 915 * scaleRatio;
-    const boxMaxWidth = 430 * scaleRatio;
+  // 5. Render auto-fitting Custom Name inside "BEST WISHES FROM" purple box
+  const boxCenterX = 500 * scaleRatio;
+  const boxCenterY = 915 * scaleRatio;
+  const boxMaxWidth = 440 * scaleRatio;
+  const boxMaxHeight = 80 * scaleRatio;
 
-    if (photoState.customName && photoState.customName.trim()) {
-      renderCustomNameText(
-        ctx,
-        photoState.customName,
-        boxCenterX,
-        boxCenterY,
-        boxMaxWidth,
-        scaleRatio
-      );
-    } else {
-      // Subtle hint if name is currently empty
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = `italic 500 ${22 * scaleRatio}px 'Outfit', 'Poppins', sans-serif`;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.fillText('(Type your name below)', boxCenterX, boxCenterY);
-      ctx.restore();
-    }
+  if (photoState.customName && photoState.customName.trim()) {
+    renderCustomNameText(
+      ctx,
+      photoState.customName,
+      boxCenterX,
+      boxCenterY,
+      boxMaxWidth,
+      boxMaxHeight,
+      scaleRatio
+    );
   }
 
   // 6. Optional full golden circular border if enabled by user

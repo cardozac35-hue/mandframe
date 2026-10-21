@@ -9,11 +9,9 @@ import {
   Sliders, 
   Layers,
   Sparkles,
-  Type,
-  Award,
-  HeartHandshake
+  Type
 } from 'lucide-react';
-import { PhotoState, FrameType } from '../types';
+import { PhotoState } from '../types';
 
 interface PhotoControlsProps {
   photoState: PhotoState;
@@ -23,7 +21,6 @@ interface PhotoControlsProps {
   onResetAll: () => void;
   onCornerBackgroundChange: (bg: 'transparent' | 'white') => void;
   onToggleGoldenBorder: () => void;
-  onFrameTypeChange: (type: FrameType) => void;
   onCustomNameChange: (name: string) => void;
 }
 
@@ -35,7 +32,6 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
   onResetAll,
   onCornerBackgroundChange,
   onToggleGoldenBorder,
-  onFrameTypeChange,
   onCustomNameChange,
 }) => {
   const hasPhoto = Boolean(photoState.imageElement);
@@ -60,126 +56,55 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
     onRotateChange(next);
   };
 
-  const quickNameSuggestions = [
-    'Cardoza Family',
-    'Friends & Family',
-    'Well Wishers',
-    'Konkani Lovers',
-  ];
-
   return (
     <div className="w-full space-y-5 bg-white p-5 sm:p-6 rounded-2xl border border-pink-100 shadow-xs">
       
-      {/* 1. FRAME DESIGN SELECTION */}
-      <div className="space-y-2.5 pb-4 border-b border-slate-100">
+      {/* 1. BEST WISHES FROM - TYPE NAME INPUT (AUTOFIT) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-pink-50/70 to-amber-50/50 border border-purple-200/80 space-y-2.5 shadow-2xs">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#A00055]">
-            <Award className="w-4 h-4 text-[#A00055]" />
-            <span>Select Event Frame Design</span>
-          </div>
+          <label 
+            htmlFor="custom-name-input"
+            className="text-xs sm:text-sm font-bold text-[#18215B] flex items-center gap-2"
+          >
+            <div className="w-6 h-6 rounded-md bg-[#A00055] text-white flex items-center justify-center">
+              <Type className="w-3.5 h-3.5" />
+            </div>
+            <span>Best Wishes From — Type Your Name:</span>
+          </label>
+          <span className="text-[11px] text-slate-400 font-mono">
+            {photoState.customName.length}/45
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {/* Frame 1 Option */}
-          <button
-            type="button"
-            onClick={() => onFrameTypeChange('participant')}
-            className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-              photoState.frameType === 'participant'
-                ? 'border-[#A00055] bg-pink-50/80 shadow-xs ring-2 ring-[#A00055]/20'
-                : 'border-slate-200 hover:border-pink-300 hover:bg-slate-50'
-            }`}
-          >
-            <div className="w-9 h-9 rounded-lg bg-[#A00055] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Award className="w-5 h-5 text-amber-300" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#18215B]">Proudly Participating</div>
-              <div className="text-[11px] text-slate-500">Official Participant Badge</div>
-            </div>
-          </button>
-
-          {/* Frame 2 Option */}
-          <button
-            type="button"
-            onClick={() => onFrameTypeChange('wishes')}
-            className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-              photoState.frameType === 'wishes'
-                ? 'border-[#D41472] bg-pink-50/80 shadow-xs ring-2 ring-[#D41472]/20'
-                : 'border-slate-200 hover:border-pink-300 hover:bg-slate-50'
-            }`}
-          >
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#D41472] to-[#D9A52E] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <HeartHandshake className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#18215B]">Best Wishes From</div>
-              <div className="text-[11px] text-[#A00055] font-semibold">With Custom Name Box</div>
-            </div>
-          </button>
+        <div className="relative">
+          <input
+            id="custom-name-input"
+            type="text"
+            maxLength={45}
+            value={photoState.customName}
+            onChange={(e) => onCustomNameChange(e.target.value)}
+            placeholder="e.g. Cardoza Family / Your Name"
+            className="w-full px-4 py-2.5 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-[#18215B] placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#A00055]/30 focus:border-[#A00055] transition-all shadow-2xs"
+          />
+          {photoState.customName && (
+            <button
+              type="button"
+              onClick={() => onCustomNameChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
+              title="Clear name"
+            >
+              ✕
+            </button>
+          )}
         </div>
+
+        <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+          <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+          <span>Your name dynamically auto-fits inside the official event frame.</span>
+        </p>
       </div>
 
-      {/* 2. CUSTOM NAME INPUT (Active only when 'wishes' frame is selected) */}
-      {photoState.frameType === 'wishes' && (
-        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50/80 via-pink-50/60 to-amber-50/50 border border-purple-200 space-y-3 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <label 
-              htmlFor="custom-name-input"
-              className="text-xs font-bold text-[#18215B] flex items-center gap-1.5"
-            >
-              <Type className="w-4 h-4 text-[#A00055]" />
-              <span>Type Your Name for "BEST WISHES FROM":</span>
-            </label>
-            <span className="text-[10px] text-slate-400 font-mono">
-              {photoState.customName.length}/40
-            </span>
-          </div>
-
-          <div className="relative">
-            <input
-              id="custom-name-input"
-              type="text"
-              maxLength={40}
-              value={photoState.customName}
-              onChange={(e) => onCustomNameChange(e.target.value)}
-              placeholder="e.g. Cardoza Family / John Doe"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-[#18215B] placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#A00055]/30 focus:border-[#A00055] transition-all"
-            />
-            {photoState.customName && (
-              <button
-                type="button"
-                onClick={() => onCustomNameChange('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1"
-                title="Clear name"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* Quick Suggestions Chips */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <span className="text-[10px] text-slate-500 font-medium mr-1">Quick Suggestions:</span>
-            {quickNameSuggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => onCustomNameChange(suggestion)}
-                className="text-[11px] font-semibold text-[#A00055] bg-white px-2.5 py-1 rounded-lg border border-pink-200 hover:bg-pink-100/60 transition-colors cursor-pointer shadow-2xs"
-              >
-                + {suggestion}
-              </button>
-            ))}
-          </div>
-
-          <p className="text-[11px] text-slate-500 italic">
-            ✨ Your name automatically appears inside the golden-bordered purple box on the frame.
-          </p>
-        </div>
-      )}
-
-      {/* 3. PHOTO POSITION & ZOOM CONTROLS */}
+      {/* 2. PHOTO POSITION & ZOOM CONTROLS */}
       <div className="space-y-4 pt-1">
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -200,7 +125,7 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
 
         {!hasPhoto ? (
           <div className="py-4 text-center text-xs text-slate-400">
-            Upload or select a photo to enable position and zoom controls.
+            Upload a photo above to enable position and zoom controls.
           </div>
         ) : (
           <div className="space-y-4">
