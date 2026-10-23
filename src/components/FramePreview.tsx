@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Move, RefreshCw } from 'lucide-react';
+import { Move, RefreshCw, Upload, Camera } from 'lucide-react';
 import { PhotoState, FrameOption } from '../types';
 import { renderFrameComposition } from '../utils/imageComposition';
 
@@ -9,6 +9,7 @@ interface FramePreviewProps {
   activeFrame: FrameOption;
   onPanChange: (panX: number, panY: number) => void;
   onScaleChange: (scale: number) => void;
+  onUploadClick?: () => void;
 }
 
 export const FramePreview: React.FC<FramePreviewProps> = ({
@@ -17,6 +18,7 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
   activeFrame,
   onPanChange,
   onScaleChange,
+  onUploadClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,9 +90,12 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
     setIsDragging(false);
   };
 
-  // Touch handlers (pan and pinch-to-zoom)
+  // Touch handlers with touch-action: none for silky mobile interaction
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!photoState.imageElement) return;
+    if (!photoState.imageElement) {
+      if (onUploadClick) onUploadClick();
+      return;
+    }
 
     if (e.touches.length === 1) {
       // Single finger drag
@@ -155,14 +160,14 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
   return (
     <div className="flex flex-col items-center w-full">
       
-      {/* Outer Preview Container */}
+      {/* Outer Preview Container: perfectly responsive on all phone screen sizes */}
       <div 
         ref={containerRef}
         className={`relative w-full ${
           activeFrame.orientation === 'portrait' 
-            ? 'max-w-[360px] sm:max-w-[400px] aspect-[4/5]' 
-            : 'max-w-[420px] sm:max-w-[460px] aspect-square'
-        } rounded-3xl p-3 sm:p-4 bg-white shadow-xl shadow-[#A00055]/15 border border-pink-100 flex items-center justify-center select-none transition-all duration-300`}
+            ? 'max-w-[320px] xs:max-w-[360px] sm:max-w-[400px] aspect-[4/5]' 
+            : 'max-w-[340px] xs:max-w-[390px] sm:max-w-[450px] aspect-square'
+        } rounded-3xl p-2.5 sm:p-4 bg-white shadow-xl shadow-[#A00055]/15 border border-pink-100 flex items-center justify-center select-none transition-all duration-300`}
       >
         {/* Subtle decorative background pattern for canvas container */}
         <div className={`relative w-full h-full rounded-2xl overflow-hidden ${photoState.cornerBackground === 'transparent' ? 'bg-checkerboard' : 'bg-white'}`}>
@@ -179,29 +184,36 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onWheel={handleWheel}
-            className={`w-full h-full object-contain ${
+            className={`w-full h-full object-contain touch-none select-none ${
               photoState.imageElement 
                 ? isDragging ? 'cursor-grabbing' : 'cursor-grab' 
-                : 'cursor-default'
+                : 'cursor-pointer'
             }`}
           />
 
           {/* Overlay Helper Badge when photo is loaded */}
           {photoState.imageElement && (
-            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#18215B] shadow-xs border border-pink-200 pointer-events-none flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
+            <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold text-[#18215B] shadow-xs border border-pink-200 pointer-events-none flex items-center gap-1.5 opacity-85">
               <Move className="w-3 h-3 text-[#A00055]" />
-              <span>Drag to position</span>
+              <span>Drag to adjust</span>
             </div>
           )}
 
-          {/* Placeholder hint when no photo */}
+          {/* Interactive Tap-to-Upload Placeholder when no photo is loaded */}
           {!photoState.imageElement && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-white/80 backdrop-blur-xs flex items-center justify-center text-[#A00055] shadow-md mb-2">
-                <RefreshCw className="w-6 h-6 animate-pulse" />
+            <div 
+              onClick={onUploadClick}
+              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer p-4 text-center group"
+            >
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-[#A00055] shadow-md mb-2 group-hover:scale-110 transition-transform">
+                <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <p className="text-xs font-bold text-[#18215B] bg-white/85 backdrop-blur-xs px-3 py-1 rounded-full shadow-xs">
-                {activeFrame.title} Ready
+              <p className="text-xs sm:text-sm font-bold text-[#18215B] bg-white/90 backdrop-blur-xs px-3.5 py-1.5 rounded-full shadow-xs border border-pink-100 flex items-center gap-1.5">
+                <Upload className="w-3.5 h-3.5 text-[#A00055]" />
+                <span>Tap to Choose Photo</span>
+              </p>
+              <p className="text-[10px] sm:text-xs text-slate-500 mt-1 font-medium bg-white/70 px-2 rounded-full">
+                {activeFrame.title}
               </p>
             </div>
           )}
@@ -210,12 +222,12 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
       </div>
 
       {/* Helpful instruction text below canvas */}
-      <p className="text-xs text-slate-500 mt-2.5 text-center flex items-center justify-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#D41472]"></span>
+      <p className="text-[11px] sm:text-xs text-slate-500 mt-2 text-center flex items-center justify-center gap-1.5 px-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#D41472] shrink-0"></span>
         <span>
           {photoState.imageElement 
-            ? 'Touch / Drag photo to reposition • Scroll to zoom' 
-            : 'Upload a picture above to place it in the frame'}
+            ? 'Pinch / Drag photo with finger to reposition & zoom' 
+            : 'Tap frame or upload button below to add your picture'}
         </span>
       </p>
 

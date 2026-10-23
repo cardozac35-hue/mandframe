@@ -14,8 +14,8 @@ export const HowItWorks: React.FC = () => {
     },
     {
       step: '02',
-      title: 'Customize Your Frame',
-      description: 'Drag to position, zoom in/out, and rotate until your picture fits flawlessly inside the official circle.',
+      title: 'Pick Frame & Personalize',
+      description: 'Choose from 5 official designs (square or 4:5 poster), type your name with 2-line auto-fit, and pinch/drag to position.',
       icon: Sliders,
       color: 'from-[#D41472] to-[#D9A52E]',
       bgColor: 'bg-amber-50',

@@ -69,8 +69,9 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
   return (
     <div className="w-full">
-      {/* Hidden file inputs */}
+      {/* Hidden file inputs accessible via ref or ID */}
       <input
+        id="main-photo-file-input"
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -88,8 +89,8 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
       {/* Error message banner */}
       {errorMessage && (
-        <div className="mb-4 p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-sm text-red-700 animate-shake">
-          <AlertCircle className="w-5 h-5 shrink-0 text-red-500 mt-0.5" />
+        <div className="mb-4 p-3 sm:p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-xs sm:text-sm text-red-700">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
           <div className="flex-1">
             <span className="font-semibold">Upload Error: </span>
             {errorMessage}
@@ -97,6 +98,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
           <button 
             onClick={() => setErrorMessage(null)}
             className="text-red-400 hover:text-red-600 font-bold px-1"
+            aria-label="Dismiss error"
           >
             ×
           </button>
@@ -109,38 +111,38 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all duration-300 ${
+          className={`relative border-2 border-dashed rounded-2xl p-5 sm:p-8 text-center transition-all duration-300 ${
             isDragOver
               ? 'border-[#A00055] bg-pink-50/80 scale-[1.01]'
               : 'border-pink-200 bg-white hover:border-[#D41472]/60 hover:bg-pink-50/20'
           }`}
         >
-          <div className="max-w-md mx-auto space-y-4">
+          <div className="max-w-md mx-auto space-y-3.5 sm:space-y-4">
             
             {/* Animated Upload Icon */}
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#A00055]/10 via-[#D41472]/15 to-[#D9A52E]/10 flex items-center justify-center text-[#A00055] shadow-xs">
-              <Upload className={`w-8 h-8 ${isLoading ? 'animate-bounce' : ''}`} />
+            <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-[#A00055]/10 via-[#D41472]/15 to-[#D9A52E]/10 flex items-center justify-center text-[#A00055] shadow-xs">
+              <Upload className={`w-7 h-7 sm:w-8 sm:h-8 ${isLoading ? 'animate-bounce' : ''}`} />
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-[#18215B] font-['Outfit',sans-serif]">
-                Upload Your Photo
+              <h3 className="text-base sm:text-lg font-bold text-[#18215B] font-['Outfit',sans-serif]">
+                Upload Your Picture
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Upload your photo to create your personalized event frame.
+                Choose a portrait photo or take a selfie to place in the frame.
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Supports JPG, PNG, WEBP (Max 10 MB) • Processed 100% locally
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+                Supports JPG, PNG, WEBP (Max 10 MB) • 100% Client-Side Privacy
               </p>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {/* Mobile-Friendly Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 pt-1 w-full max-w-xs sm:max-w-none mx-auto">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#A00055] via-[#D41472] to-[#A00055] bg-[length:200%_auto] hover:bg-right transition-all duration-300 shadow-md shadow-[#A00055]/25 hover:shadow-lg hover:shadow-[#A00055]/35 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 sm:py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#A00055] via-[#D41472] to-[#A00055] bg-[length:200%_auto] hover:bg-right transition-all duration-300 shadow-md shadow-[#A00055]/25 hover:shadow-lg active:scale-95 cursor-pointer disabled:opacity-50 min-h-[44px]"
               >
                 {isLoading ? (
                   <>
@@ -150,7 +152,7 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
                 ) : (
                   <>
                     <ImageIcon className="w-4 h-4" />
-                    <span>Upload Photo</span>
+                    <span>Choose from Gallery</span>
                   </>
                 )}
               </button>
@@ -159,10 +161,10 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-[#18215B] bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl font-semibold text-sm text-[#18215B] bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors cursor-pointer disabled:opacity-50 min-h-[44px]"
               >
                 <Camera className="w-4 h-4" />
-                <span>Take Photo / Camera</span>
+                <span>Take Selfie / Camera</span>
               </button>
             </div>
 
@@ -170,30 +172,30 @@ export const PhotoUploader: React.FC<PhotoUploaderProps> = ({
         </div>
       ) : (
         /* Re-upload bar when photo already exists */
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-pink-50/70 border border-pink-200">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl bg-pink-50/70 border border-pink-200">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <span className="text-xs sm:text-sm font-semibold text-[#18215B]">
-              Photo loaded inside event circle
+              Photo loaded in event frame
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#A00055] bg-white border border-pink-200 hover:bg-pink-50 transition-colors cursor-pointer shadow-xs"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#A00055] bg-white border border-pink-200 hover:bg-pink-50 active:bg-pink-100 transition-colors cursor-pointer shadow-xs min-h-[38px]"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>Replace Photo</span>
+              <span>Change Photo</span>
             </button>
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer shadow-xs min-h-[38px]"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span>Camera</span>
+              <span>New Selfie</span>
             </button>
           </div>
         </div>

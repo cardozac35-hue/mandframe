@@ -32,6 +32,21 @@
   background: #a00055;
 }
 
+/* Touch and mobile responsiveness */
+html, body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hide scrollbar for clean horizontal swipe on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Canvas checkerboard pattern for transparent areas */
 .bg-checkerboard {
   background-image: 

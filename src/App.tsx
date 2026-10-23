@@ -100,6 +100,10 @@ export const App: React.FC = () => {
     }));
   };
 
+  const handleUploadClick = () => {
+    document.getElementById('main-photo-file-input')?.click();
+  };
+
   // Handle newly selected photo
   const handlePhotoLoaded = (file: File | null, img: HTMLImageElement, url: string) => {
     if (photoState.imageUrl && photoState.imageUrl.startsWith('blob:')) {
@@ -175,7 +179,9 @@ export const App: React.FC = () => {
       <section 
         id="photo-studio" 
         ref={editorSectionRef}
-        className="py-12 sm:py-20 relative bg-gradient-to-b from-white via-pink-50/20 to-white scroll-mt-20"
+        className={`py-8 sm:py-16 relative bg-gradient-to-b from-white via-pink-50/20 to-white scroll-mt-20 ${
+          photoState.imageElement ? 'pb-28 lg:pb-16' : ''
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           
@@ -210,13 +216,14 @@ export const App: React.FC = () => {
             
             {/* Left Column: Interactive Canvas Preview */}
             <div className="lg:col-span-6 flex flex-col items-center">
-              <div className="sticky top-28 w-full flex flex-col items-center">
+              <div className="lg:sticky lg:top-28 w-full flex flex-col items-center">
                 <FramePreview
                   photoState={photoState}
                   overlayImage={currentOverlay}
                   activeFrame={activeFrame}
                   onPanChange={handlePanChange}
                   onScaleChange={handleScaleChange}
+                  onUploadClick={handleUploadClick}
                 />
 
                 {/* Reference Artwork Authenticity Inspector trigger */}
@@ -312,6 +319,26 @@ export const App: React.FC = () => {
 
         </div>
       </section>
+
+      {/* Floating Action Bar for Mobile Phones (quick download/share when photo is ready) */}
+      {photoState.imageElement && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md px-3.5 py-2.5 border-t border-pink-200/90 shadow-2xl flex items-center gap-2">
+          <div className="flex-1">
+            <DownloadButton
+              photoState={photoState}
+              overlayImage={currentOverlay}
+              activeFrame={activeFrame}
+            />
+          </div>
+          <div className="flex-1">
+            <WhatsAppShareButton
+              photoState={photoState}
+              overlayImage={currentOverlay}
+              activeFrame={activeFrame}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Cultural Heritage and About Convention Section */}
       <AboutEvent />
