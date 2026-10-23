@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { Share2, MessageCircle, Download, Check, AlertCircle, X } from 'lucide-react';
-import { PhotoState } from '../types';
+import { PhotoState, FrameOption } from '../types';
 import { generateHighResBlob, triggerFileDownload } from '../utils/imageComposition';
 
 interface WhatsAppShareButtonProps {
   photoState: PhotoState;
   overlayImage: HTMLImageElement | null;
+  activeFrame: FrameOption;
 }
 
 export const WhatsAppShareButton: React.FC<WhatsAppShareButtonProps> = ({
   photoState,
   overlayImage,
+  activeFrame,
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -27,8 +29,9 @@ export const WhatsAppShareButton: React.FC<WhatsAppShareButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      const blob = await generateHighResBlob(photoState, overlayImage);
-      const file = new File([blob], 'Konkani-Music-Convention-2026.png', { type: 'image/png' });
+      const filename = `Konkani-Music-Convention-${activeFrame.id}.png`;
+      const blob = await generateHighResBlob(photoState, overlayImage, activeFrame);
+      const file = new File([blob], filename, { type: 'image/png' });
 
       // Check if Web Share API with files is supported
       if (
@@ -55,7 +58,7 @@ export const WhatsAppShareButton: React.FC<WhatsAppShareButtonProps> = ({
       }
 
       // Fallback: Download completed image and open WhatsApp web/app
-      triggerFileDownload(blob, 'Konkani-Music-Convention-2026.png');
+      triggerFileDownload(blob, filename);
 
       const encodedMsg = encodeURIComponent(shareText);
       const waUrl = `https://wa.me/?text=${encodedMsg}`;
@@ -116,7 +119,7 @@ export const WhatsAppShareButton: React.FC<WhatsAppShareButtonProps> = ({
                 Your Photo Frame Is Saved!
               </h4>
               <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                We have downloaded <strong className="text-[#A00055]">Konkani-Music-Convention-2026.png</strong> to your device and opened WhatsApp.
+                We have downloaded <strong className="text-[#A00055]">Konkani-Music-Convention-{activeFrame.id}.png</strong> to your device and opened WhatsApp.
               </p>
             </div>
 

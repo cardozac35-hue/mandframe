@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Move, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
-import { PhotoState } from '../types';
-import { FRAME_CONFIG, renderFrameComposition } from '../utils/imageComposition';
+import { Move, RefreshCw } from 'lucide-react';
+import { PhotoState, FrameOption } from '../types';
+import { renderFrameComposition } from '../utils/imageComposition';
 
 interface FramePreviewProps {
   photoState: PhotoState;
   overlayImage: HTMLImageElement | null;
+  activeFrame: FrameOption;
   onPanChange: (panX: number, panY: number) => void;
   onScaleChange: (scale: number) => void;
 }
@@ -13,6 +14,7 @@ interface FramePreviewProps {
 export const FramePreview: React.FC<FramePreviewProps> = ({
   photoState,
   overlayImage,
+  activeFrame,
   onPanChange,
   onScaleChange,
 }) => {
@@ -43,10 +45,11 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
       ctx,
       photoState,
       overlayImage,
-      FRAME_CONFIG.width,
-      FRAME_CONFIG.height
+      activeFrame,
+      activeFrame.width,
+      activeFrame.height
     );
-  }, [photoState, overlayImage]);
+  }, [photoState, overlayImage, activeFrame]);
 
   useEffect(() => {
     redraw();
@@ -70,7 +73,7 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
     e.preventDefault();
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const canvasScale = FRAME_CONFIG.width / rect.width;
+    const canvasScale = activeFrame.width / rect.width;
 
     const deltaX = (e.clientX - dragStartRef.current.x) * canvasScale;
     const deltaY = (e.clientY - dragStartRef.current.y) * canvasScale;
@@ -116,7 +119,7 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
     if (e.touches.length === 1 && isDragging) {
       const touch = e.touches[0];
       const rect = canvasRef.current.getBoundingClientRect();
-      const canvasScale = FRAME_CONFIG.width / rect.width;
+      const canvasScale = activeFrame.width / rect.width;
 
       const deltaX = (touch.clientX - dragStartRef.current.x) * canvasScale;
       const deltaY = (touch.clientY - dragStartRef.current.y) * canvasScale;
@@ -155,15 +158,19 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
       {/* Outer Preview Container */}
       <div 
         ref={containerRef}
-        className="relative w-full max-w-[420px] sm:max-w-[460px] aspect-square rounded-3xl p-3 sm:p-4 bg-white shadow-xl shadow-[#A00055]/15 border border-pink-100 flex items-center justify-center select-none"
+        className={`relative w-full ${
+          activeFrame.orientation === 'portrait' 
+            ? 'max-w-[360px] sm:max-w-[400px] aspect-[4/5]' 
+            : 'max-w-[420px] sm:max-w-[460px] aspect-square'
+        } rounded-3xl p-3 sm:p-4 bg-white shadow-xl shadow-[#A00055]/15 border border-pink-100 flex items-center justify-center select-none transition-all duration-300`}
       >
         {/* Subtle decorative background pattern for canvas container */}
         <div className={`relative w-full h-full rounded-2xl overflow-hidden ${photoState.cornerBackground === 'transparent' ? 'bg-checkerboard' : 'bg-white'}`}>
           
           <canvas
             ref={canvasRef}
-            width={FRAME_CONFIG.width}
-            height={FRAME_CONFIG.height}
+            width={activeFrame.width}
+            height={activeFrame.height}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -194,7 +201,7 @@ export const FramePreview: React.FC<FramePreviewProps> = ({
                 <RefreshCw className="w-6 h-6 animate-pulse" />
               </div>
               <p className="text-xs font-bold text-[#18215B] bg-white/85 backdrop-blur-xs px-3 py-1 rounded-full shadow-xs">
-                Official Event Frame Ready
+                {activeFrame.title} Ready
               </p>
             </div>
           )}

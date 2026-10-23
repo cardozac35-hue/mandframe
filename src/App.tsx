@@ -1,21 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { HowItWorks } from './components/HowItWorks';
 import { PhotoUploader } from './components/PhotoUploader';
 import { FramePreview } from './components/FramePreview';
+import { FrameSelector } from './components/FrameSelector';
 import { PhotoControls } from './components/PhotoControls';
 import { DownloadButton } from './components/DownloadButton';
 import { WhatsAppShareButton } from './components/WhatsAppShareButton';
 import { AboutEvent } from './components/AboutEvent';
 import { Footer } from './components/Footer';
-import { PhotoState } from './types';
-import { FRAME_CONFIG } from './utils/imageComposition';
+import { PhotoState, FrameId } from './types';
+import { AVAILABLE_FRAMES, DEFAULT_FRAME, getFrameById } from './utils/imageComposition';
 import { loadImageFromUrl } from './utils/imageValidation';
-import { Sparkles, Eye, ShieldCheck } from 'lucide-react';
+import { Sparkles, Eye, ShieldCheck, Check } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [overlayImage, setOverlayImage] = useState<HTMLImageElement | null>(null);
+  const [overlayImages, setOverlayImages] = useState<Partial<Record<FrameId, HTMLImageElement>>>({});
   const [overlayLoading, setOverlayLoading] = useState(true);
   const [overlayError, setOverlayError] = useState<string | null>(null);
 
@@ -33,10 +34,18 @@ export const App: React.FC = () => {
     cornerBackground: 'transparent',
     showGoldenBorder: false,
     customName: '',
+    selectedFrameId: DEFAULT_FRAME.id,
   });
 
   const [isPhotoLoading, setIsPhotoLoading] = useState(false);
   const [showArtworkModal, setShowArtworkModal] = useState(false);
+
+  // Active Frame Configuration
+  const activeFrame = useMemo(() => {
+    return getFrameById(photoState.selectedFrameId);
+  }, [photoState.selectedFrameId]);
+
+  const currentOverlay = overlayImages[photoState.selectedFrameId] || null;
 
   // Section reference for smooth scroll
   const editorSectionRef = useRef<HTMLDivElement>(null);
@@ -45,30 +54,51 @@ export const App: React.FC = () => {
     editorSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Pre-load official "Best Wishes From" frame overlay on startup
+  // Pre-load all 5 official frame overlays on app startup for instantaneous switching
   useEffect(() => {
     let isMounted = true;
     setOverlayLoading(true);
 
-    loadImageFromUrl(FRAME_CONFIG.overlaySrc)
-      .then((img) => {
-        if (isMounted) {
-          setOverlayImage(img);
-          setOverlayLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error('Failed to load frame overlay:', err);
-          setOverlayError('Failed to load official frame artwork. Please refresh the page.');
-          setOverlayLoading(false);
+    const loadTasks = AVAILABLE_FRAMES.map((f) =>
+      loadImageFromUrl(f.overlaySrc)
+        .then((img) => ({ id: f.id, img }))
+        .catch((err) => {
+          console.warn(`Failed to preload frame ${f.id}:`, err);
+          return null;
+        })
+    );
+
+    Promise.all(loadTasks).then((results) => {
+      if (!isMounted) return;
+      const cache: Partial<Record<FrameId, HTMLImageElement>> = {};
+      results.forEach((res) => {
+        if (res) {
+          cache[res.id] = res.img;
         }
       });
+      setOverlayImages(cache);
+      setOverlayLoading(false);
+
+      if (!cache[DEFAULT_FRAME.id]) {
+        setOverlayError('Failed to load default frame artwork. Please refresh the page.');
+      }
+    });
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // Frame selection handler
+  const handleFrameChange = (selectedFrameId: FrameId) => {
+    setPhotoState((prev) => ({
+      ...prev,
+      selectedFrameId,
+      // Reset pan offsets for optimal initial framing when switching aspect ratio
+      panX: 0,
+      panY: 0,
+    }));
+  };
 
   // Handle newly selected photo
   const handlePhotoLoaded = (file: File | null, img: HTMLImageElement, url: string) => {
@@ -147,10 +177,10 @@ export const App: React.FC = () => {
         ref={editorSectionRef}
         className="py-12 sm:py-20 relative bg-gradient-to-b from-white via-pink-50/20 to-white scroll-mt-20"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           
           {/* Section Heading */}
-          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-3">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#A00055] bg-pink-50 px-3 py-1 rounded-full border border-pink-200">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Official Frame Studio
             </span>
@@ -158,16 +188,22 @@ export const App: React.FC = () => {
               Personalize Your Event Frame
             </h2>
             <p className="text-sm sm:text-base text-slate-600">
-              Upload your photo, type your name for <strong>"BEST WISHES FROM"</strong>, fine-tune framing, and download your 1024×1024 high-resolution image.
+              Choose your favorite frame design, upload your picture, type your name with 2-line auto-fit, and download in high-resolution.
             </p>
           </div>
 
           {/* Overlay loading/error alert */}
           {overlayError && (
-            <div className="max-w-2xl mx-auto mb-8 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm text-center">
+            <div className="max-w-2xl mx-auto p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm text-center">
               {overlayError}
             </div>
           )}
+
+          {/* Frame Template Selector Carousel / Grid */}
+          <FrameSelector
+            selectedFrameId={photoState.selectedFrameId}
+            onSelectFrame={handleFrameChange}
+          />
 
           {/* Studio Workspace Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
@@ -177,7 +213,8 @@ export const App: React.FC = () => {
               <div className="sticky top-28 w-full flex flex-col items-center">
                 <FramePreview
                   photoState={photoState}
-                  overlayImage={overlayImage}
+                  overlayImage={currentOverlay}
+                  activeFrame={activeFrame}
                   onPanChange={handlePanChange}
                   onScaleChange={handleScaleChange}
                 />
@@ -189,7 +226,7 @@ export const App: React.FC = () => {
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#A00055] transition-colors cursor-pointer bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-xs"
                   >
                     <Eye className="w-3.5 h-3.5 text-[#A00055]" />
-                    <span>View Official Reference Frame</span>
+                    <span>View Official Reference Frames</span>
                   </button>
                 </div>
               </div>
@@ -226,6 +263,7 @@ export const App: React.FC = () => {
 
                 <PhotoControls
                   photoState={photoState}
+                  activeFrame={activeFrame}
                   onScaleChange={handleScaleChange}
                   onRotateChange={handleRotateChange}
                   onResetPosition={handleResetPosition}
@@ -248,19 +286,23 @@ export const App: React.FC = () => {
                 <div className="space-y-3">
                   <DownloadButton
                     photoState={photoState}
-                    overlayImage={overlayImage}
+                    overlayImage={currentOverlay}
+                    activeFrame={activeFrame}
                   />
 
                   <WhatsAppShareButton
                     photoState={photoState}
-                    overlayImage={overlayImage}
+                    overlayImage={currentOverlay}
+                    activeFrame={activeFrame}
                   />
                 </div>
 
                 {/* Privacy & Trust indicator */}
                 <div className="pt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Local client-side rendering • High-resolution 1024×1024 PNG</span>
+                  <span>
+                    Local client-side rendering • High-resolution {activeFrame.width}×{activeFrame.height} PNG
+                  </span>
                 </div>
               </div>
 
@@ -277,35 +319,47 @@ export const App: React.FC = () => {
       {/* Official Reference Artwork Modal */}
       {showArtworkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-pink-100 max-h-[90vh] overflow-y-auto space-y-6">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-pink-100 max-h-[90vh] overflow-y-auto space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-[#18215B] font-['Outfit',sans-serif]">
-                  Supplied Official Reference Frame
+                  Official Convention Frames
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Official "Best Wishes From" Convention Frame
+                  5 official styles available for Konkani Music Mega Convention 2026
                 </p>
               </div>
               <button
                 onClick={() => setShowArtworkModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold px-2 py-1"
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold px-2 py-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-2">
-              <div className="aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-white p-2 shadow-xs">
-                <img 
-                  src="/assets/event-frame-wishes-overlay.png" 
-                  alt="Official Best Wishes Frame"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <p className="text-xs text-slate-500 text-center">
-                Preserved official artwork with sunset, sailboat, Mandd Sobhann emblem, and "BEST WISHES FROM" custom name box.
-              </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {AVAILABLE_FRAMES.map((f) => (
+                <div 
+                  key={f.id} 
+                  onClick={() => {
+                    handleFrameChange(f.id);
+                    setShowArtworkModal(false);
+                  }}
+                  className="p-3 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-[#A00055] hover:bg-pink-50/30 transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="aspect-[4/4] rounded-xl overflow-hidden bg-white border border-slate-100 p-1 flex items-center justify-center">
+                    <img 
+                      src={f.thumbnailSrc} 
+                      alt={f.title}
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h5 className="text-xs font-bold text-[#18215B] line-clamp-1">{f.title}</h5>
+                    <p className="text-[10px] text-slate-500">{f.width}×{f.height}px</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <button

@@ -11,10 +11,11 @@ import {
   Sparkles,
   Type
 } from 'lucide-react';
-import { PhotoState } from '../types';
+import { PhotoState, FrameOption } from '../types';
 
 interface PhotoControlsProps {
   photoState: PhotoState;
+  activeFrame: FrameOption;
   onScaleChange: (scale: number) => void;
   onRotateChange: (rotation: number) => void;
   onResetPosition: () => void;
@@ -26,6 +27,7 @@ interface PhotoControlsProps {
 
 export const PhotoControls: React.FC<PhotoControlsProps> = ({
   photoState,
+  activeFrame,
   onScaleChange,
   onRotateChange,
   onResetPosition,
@@ -59,65 +61,72 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
   return (
     <div className="w-full space-y-5 bg-white p-5 sm:p-6 rounded-2xl border border-pink-100 shadow-xs">
       
-      {/* 1. BEST WISHES FROM - TYPE NAME INPUT (1 OR 2 LINES AUTOFIT) */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-pink-50/70 to-amber-50/50 border border-purple-200/80 space-y-2.5 shadow-2xs">
-        <div className="flex items-center justify-between">
-          <label 
-            htmlFor="custom-name-input"
-            className="text-xs sm:text-sm font-bold text-[#18215B] flex items-center gap-2"
-          >
-            <div className="w-6 h-6 rounded-md bg-[#A00055] text-white flex items-center justify-center">
-              <Type className="w-3.5 h-3.5" />
-            </div>
-            <span>Best Wishes From — Type Your Name:</span>
-          </label>
-          <span className="text-[11px] text-slate-400 font-mono">
-            {photoState.customName.length}/60
-          </span>
-        </div>
-
-        <div className="relative">
-          <textarea
-            id="custom-name-input"
-            rows={2}
-            maxLength={60}
-            value={photoState.customName}
-            onChange={(e) => {
-              const lines = e.target.value.split('\n');
-              if (lines.length > 2) {
-                onCustomNameChange(lines.slice(0, 2).join('\n'));
-              } else {
-                onCustomNameChange(e.target.value);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const lines = photoState.customName.split('\n');
-                if (lines.length >= 2) {
-                  e.preventDefault();
-                }
-              }
-            }}
-            placeholder={"e.g. Cardoza Family\n(or press Enter for 2nd line)"}
-            className="w-full px-4 py-2 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-[#18215B] placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#A00055]/30 focus:border-[#A00055] transition-all shadow-2xs resize-none"
-          />
-          {photoState.customName && (
-            <button
-              type="button"
-              onClick={() => onCustomNameChange('')}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
-              title="Clear name"
+      {/* 1. NAME INPUT (1 OR 2 LINES AUTOFIT) - DYNAMIC BASED ON SELECTED FRAME */}
+      {activeFrame.hasNameInput ? (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-pink-50/70 to-amber-50/50 border border-purple-200/80 space-y-2.5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <label 
+              htmlFor="custom-name-input"
+              className="text-xs sm:text-sm font-bold text-[#18215B] flex items-center gap-2"
             >
-              ✕
-            </button>
-          )}
-        </div>
+              <div className="w-6 h-6 rounded-md bg-[#A00055] text-white flex items-center justify-center">
+                <Type className="w-3.5 h-3.5" />
+              </div>
+              <span>{activeFrame.badgeLabel} — Type Your Name:</span>
+            </label>
+            <span className="text-[11px] text-slate-400 font-mono">
+              {photoState.customName.length}/60
+            </span>
+          </div>
 
-        <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
-          <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-          <span>Auto-fits in center (supports 1 or 2 lines — press Enter for line 2).</span>
-        </p>
-      </div>
+          <div className="relative">
+            <textarea
+              id="custom-name-input"
+              rows={2}
+              maxLength={60}
+              value={photoState.customName}
+              onChange={(e) => {
+                const lines = e.target.value.split('\n');
+                if (lines.length > 2) {
+                  onCustomNameChange(lines.slice(0, 2).join('\n'));
+                } else {
+                  onCustomNameChange(e.target.value);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const lines = photoState.customName.split('\n');
+                  if (lines.length >= 2) {
+                    e.preventDefault();
+                  }
+                }
+              }}
+              placeholder={"e.g. Cardoza Family\n(or press Enter for 2nd line)"}
+              className="w-full px-4 py-2 rounded-xl border border-purple-200 bg-white text-sm font-semibold text-[#18215B] placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#A00055]/30 focus:border-[#A00055] transition-all shadow-2xs resize-none"
+            />
+            {photoState.customName && (
+              <button
+                type="button"
+                onClick={() => onCustomNameChange('')}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
+                title="Clear name"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+            <span>Auto-fits in center (supports 1 or 2 lines — press Enter for line 2).</span>
+          </p>
+        </div>
+      ) : (
+        <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-900 flex items-center gap-2.5">
+          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>Official Convention Frame — Displays <strong>All Are Cordially Invited</strong>.</span>
+        </div>
+      )}
 
       {/* 2. PHOTO POSITION & ZOOM CONTROLS */}
       <div className="space-y-4 pt-1">
@@ -260,27 +269,29 @@ export const PhotoControls: React.FC<PhotoControlsProps> = ({
                 </div>
               </div>
 
-              {/* Golden Rim Accent Option */}
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                  <Sparkles className="w-3.5 h-3.5 text-[#D9A52E]" />
-                  <span>Golden Circular Border Accent:</span>
-                </span>
+              {/* Golden Rim Accent Option (Square frames only) */}
+              {activeFrame.orientation === 'square' && (
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="flex items-center gap-1.5 text-slate-700 font-medium">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D9A52E]" />
+                    <span>Golden Circular Border Accent:</span>
+                  </span>
 
-                <button
-                  type="button"
-                  onClick={onToggleGoldenBorder}
-                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                    photoState.showGoldenBorder ? 'bg-[#D9A52E]' : 'bg-slate-200'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                      photoState.showGoldenBorder ? 'translate-x-5' : 'translate-x-0'
+                  <button
+                    type="button"
+                    onClick={onToggleGoldenBorder}
+                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      photoState.showGoldenBorder ? 'bg-[#D9A52E]' : 'bg-slate-200'
                     }`}
-                  />
-                </button>
-              </div>
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        photoState.showGoldenBorder ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
 
             </div>
 

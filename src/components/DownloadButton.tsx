@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { Download, CheckCircle2, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { PhotoState, DownloadStatus } from '../types';
+import { PhotoState, DownloadStatus, FrameOption } from '../types';
 import { generateHighResBlob, triggerFileDownload } from '../utils/imageComposition';
 
 interface DownloadButtonProps {
   photoState: PhotoState;
   overlayImage: HTMLImageElement | null;
+  activeFrame: FrameOption;
 }
 
 export const DownloadButton: React.FC<DownloadButtonProps> = ({
   photoState,
   overlayImage,
+  activeFrame,
 }) => {
   const [status, setStatus] = useState<DownloadStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -28,8 +30,8 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
       // Allow UI thread to show preparing state
       await new Promise((r) => setTimeout(r, 120));
 
-      const blob = await generateHighResBlob(photoState, overlayImage);
-      triggerFileDownload(blob, 'Konkani-Music-Convention-2026.png');
+      const blob = await generateHighResBlob(photoState, overlayImage, activeFrame);
+      triggerFileDownload(blob, `Konkani-Music-Convention-${activeFrame.id}.png`);
 
       setStatus('ready');
 
@@ -101,7 +103,7 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
             <Download className="w-5 h-5 text-amber-300" />
             <span>Download My Photo</span>
             <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-mono text-amber-200">
-              PNG • 1024px
+              PNG • {activeFrame.width}×{activeFrame.height}px
             </span>
           </>
         )}

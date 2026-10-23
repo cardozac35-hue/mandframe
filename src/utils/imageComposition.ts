@@ -1,12 +1,110 @@
-import { PhotoState, FrameConfig } from '../types';
+import { PhotoState, FrameConfig, FrameOption, FrameId } from '../types';
+
+export const AVAILABLE_FRAMES: FrameOption[] = [
+  {
+    id: 'wishes-square',
+    title: 'Best Wishes (Square)',
+    subtitle: 'Classic 1:1 circular badge for WhatsApp DP & Profile',
+    badgeLabel: 'Best Wishes From',
+    orientation: 'square',
+    width: 1024,
+    height: 1024,
+    circleCenterX: 512,
+    circleCenterY: 512,
+    circleRadius: 512,
+    pillCenterX: 512,
+    pillCenterY: 936.5,
+    pillMaxWidth: 440,
+    pillMaxHeight: 76,
+    overlaySrc: '/assets/frame-wishes-square.png',
+    thumbnailSrc: '/assets/thumb-wishes-square.png',
+    hasNameInput: true,
+  },
+  {
+    id: 'wishes-portrait',
+    title: 'Best Wishes (Portrait 4:5)',
+    subtitle: 'Full-height 4:5 vertical poster for Instagram & WhatsApp Status',
+    badgeLabel: 'Best Wishes From',
+    orientation: 'portrait',
+    width: 1024,
+    height: 1280,
+    pillCenterX: 512,
+    pillCenterY: 1206.5,
+    pillMaxWidth: 560,
+    pillMaxHeight: 68,
+    overlaySrc: '/assets/frame-wishes-portrait.png',
+    thumbnailSrc: '/assets/thumb-wishes-portrait.png',
+    hasNameInput: true,
+  },
+  {
+    id: 'participant-square',
+    title: 'Proud Participant (Square)',
+    subtitle: 'Official 1:1 circular badge with Proud Participant banner',
+    badgeLabel: 'Proud Participant',
+    orientation: 'square',
+    width: 1024,
+    height: 1024,
+    circleCenterX: 512,
+    circleCenterY: 512,
+    circleRadius: 512,
+    pillCenterX: 512,
+    pillCenterY: 936.5,
+    pillMaxWidth: 440,
+    pillMaxHeight: 76,
+    overlaySrc: '/assets/frame-participant-square.png',
+    thumbnailSrc: '/assets/thumb-participant-square.png',
+    hasNameInput: true,
+  },
+  {
+    id: 'participant-portrait',
+    title: 'Proud Participant (Portrait 4:5)',
+    subtitle: 'Full-height 4:5 vertical poster with Proud Participant banner',
+    badgeLabel: 'Proud Participant',
+    orientation: 'portrait',
+    width: 1024,
+    height: 1280,
+    pillCenterX: 512,
+    pillCenterY: 1206.5,
+    pillMaxWidth: 560,
+    pillMaxHeight: 68,
+    overlaySrc: '/assets/frame-participant-portrait.png',
+    thumbnailSrc: '/assets/thumb-participant-portrait.png',
+    hasNameInput: true,
+  },
+  {
+    id: 'invitation-square',
+    title: 'All Are Cordially Invited',
+    subtitle: 'Official convention invitation frame with St. Aloysius chapel',
+    badgeLabel: 'All Are Cordially Invited',
+    orientation: 'square',
+    width: 1024,
+    height: 1024,
+    circleCenterX: 512,
+    circleCenterY: 512,
+    circleRadius: 512,
+    pillCenterX: 512,
+    pillCenterY: 936.5,
+    pillMaxWidth: 440,
+    pillMaxHeight: 76,
+    overlaySrc: '/assets/event-frame-overlay.png',
+    thumbnailSrc: '/assets/thumb-invitation-square.png',
+    hasNameInput: false,
+  },
+];
+
+export const DEFAULT_FRAME = AVAILABLE_FRAMES[0];
+
+export function getFrameById(id: FrameId): FrameOption {
+  return AVAILABLE_FRAMES.find((f) => f.id === id) || DEFAULT_FRAME;
+}
 
 export const FRAME_CONFIG: FrameConfig = {
-  width: 1024,
-  height: 1024,
-  circleCenterX: 512,
-  circleCenterY: 512,
-  circleRadius: 512,
-  overlaySrc: '/assets/event-frame-wishes-overlay.png',
+  width: DEFAULT_FRAME.width,
+  height: DEFAULT_FRAME.height,
+  circleCenterX: DEFAULT_FRAME.circleCenterX ?? 512,
+  circleCenterY: DEFAULT_FRAME.circleCenterY ?? 512,
+  circleRadius: DEFAULT_FRAME.circleRadius ?? 512,
+  overlaySrc: DEFAULT_FRAME.overlaySrc,
 };
 
 /**
@@ -36,8 +134,8 @@ function splitIntoTwoBalancedLines(text: string): [string, string] {
 }
 
 /**
- * Renders dynamically auto-fitted text centered inside the "BEST WISHES FROM" purple pill.
- * Supports 1 or 2 lines with precision horizontal and vertical centering at Y = 936.5.
+ * Renders dynamically auto-fitted text centered inside the purple pill.
+ * Supports 1 or 2 lines with precision horizontal and vertical centering.
  */
 function renderCustomNameText(
   ctx: CanvasRenderingContext2D,
@@ -117,7 +215,7 @@ function renderCustomNameText(
     // TWO LINES MODE
     let fontSize = 24 * scaleRatio;
     const minFontSize = 12 * scaleRatio;
-    const targetMaxWidth = maxWidth * 0.88; // Extra margin for top/bottom curves of pill
+    const targetMaxWidth = maxWidth * 0.88; // Extra margin for curves of pill
 
     ctx.font = `bold ${fontSize}px 'Outfit', 'Poppins', sans-serif`;
     let w1 = ctx.measureText(lines[0]).width;
@@ -154,13 +252,11 @@ export function renderFrameComposition(
   ctx: CanvasRenderingContext2D,
   photoState: PhotoState,
   overlayImage: HTMLImageElement | null,
-  canvasWidth: number = FRAME_CONFIG.width,
-  canvasHeight: number = FRAME_CONFIG.height
+  activeFrame: FrameOption = DEFAULT_FRAME,
+  canvasWidth: number = activeFrame.width,
+  canvasHeight: number = activeFrame.height
 ): void {
-  const scaleRatio = canvasWidth / FRAME_CONFIG.width;
-  const cx = FRAME_CONFIG.circleCenterX * scaleRatio;
-  const cy = FRAME_CONFIG.circleCenterY * scaleRatio;
-  const radius = FRAME_CONFIG.circleRadius * scaleRatio;
+  const scaleRatio = canvasWidth / activeFrame.width;
 
   // Clear canvas
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -175,71 +271,110 @@ export function renderFrameComposition(
   if (photoState.imageElement && photoState.imageElement.complete) {
     ctx.save();
 
-    // 1. Clip to circular frame area
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-
-    // 2. Clip upper photo window region (ensuring photo tucks under banner but never bleeds past bottom rim)
-    ctx.beginPath();
-    ctx.rect(0, 0, canvasWidth, cy + (230 * scaleRatio));
-    ctx.closePath();
-    ctx.clip();
-
-    // Subtle dark backdrop behind photo in case user zooms way out
-    ctx.fillStyle = '#1A0C22';
-    ctx.fill();
-
-    // 3. Calculate object-fit: cover scaling
     const img = photoState.imageElement;
     const imgW = img.naturalWidth || img.width;
     const imgH = img.naturalHeight || img.height;
 
-    // Base scale to cover the diameter of the circular photo window
-    const baseScale = Math.max((radius * 2) / imgW, (radius * 2) / imgH);
-    const finalScale = baseScale * photoState.scale;
+    if (activeFrame.orientation === 'square') {
+      const cx = (activeFrame.circleCenterX ?? 512) * scaleRatio;
+      const cy = (activeFrame.circleCenterY ?? 512) * scaleRatio;
+      const radius = (activeFrame.circleRadius ?? 512) * scaleRatio;
 
-    const drawW = imgW * finalScale;
-    const drawH = imgH * finalScale;
+      // 1. Clip to circular frame area
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
 
-    // Apply translation, rotation, and drawing
-    const renderCenterX = cx + (photoState.panX * scaleRatio);
-    const renderCenterY = (cy - (30 * scaleRatio)) + (photoState.panY * scaleRatio);
+      // 2. Clip upper photo window region
+      ctx.beginPath();
+      ctx.rect(0, 0, canvasWidth, cy + (230 * scaleRatio));
+      ctx.closePath();
+      ctx.clip();
 
-    ctx.translate(renderCenterX, renderCenterY);
+      // Subtle dark backdrop behind photo in case user zooms way out
+      ctx.fillStyle = '#1A0C22';
+      ctx.fill();
 
-    if (photoState.rotation !== 0) {
-      ctx.rotate((photoState.rotation * Math.PI) / 180);
+      // 3. Object-fit cover scaling
+      const baseScale = Math.max((radius * 2) / imgW, (radius * 2) / imgH);
+      const finalScale = baseScale * photoState.scale;
+      const drawW = imgW * finalScale;
+      const drawH = imgH * finalScale;
+
+      const renderCenterX = cx + (photoState.panX * scaleRatio);
+      const renderCenterY = (cy - (30 * scaleRatio)) + (photoState.panY * scaleRatio);
+
+      ctx.translate(renderCenterX, renderCenterY);
+      if (photoState.rotation !== 0) {
+        ctx.rotate((photoState.rotation * Math.PI) / 180);
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+
+    } else {
+      // PORTRAIT 4:5 MODE
+      const photoAreaHeight = 980 * scaleRatio;
+
+      // Clip upper rectangular window
+      ctx.beginPath();
+      ctx.rect(0, 0, canvasWidth, photoAreaHeight);
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.fillStyle = '#1A0C22';
+      ctx.fill();
+
+      // Base scale to cover portrait window
+      const baseScale = Math.max(canvasWidth / imgW, photoAreaHeight / imgH);
+      const finalScale = baseScale * photoState.scale;
+      const drawW = imgW * finalScale;
+      const drawH = imgH * finalScale;
+
+      const cx = canvasWidth / 2;
+      const cy = (photoAreaHeight / 2) - (20 * scaleRatio);
+      const renderCenterX = cx + (photoState.panX * scaleRatio);
+      const renderCenterY = cy + (photoState.panY * scaleRatio);
+
+      ctx.translate(renderCenterX, renderCenterY);
+      if (photoState.rotation !== 0) {
+        ctx.rotate((photoState.rotation * Math.PI) / 180);
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     }
-
-    // High quality image smoothing
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
 
     ctx.restore();
   } else {
-    // Empty state on canvas: Draw gentle circular placeholder hint
+    // Empty state on canvas: Draw gentle placeholder hint
     ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
+    if (activeFrame.orientation === 'square') {
+      const cx = (activeFrame.circleCenterX ?? 512) * scaleRatio;
+      const cy = (activeFrame.circleCenterY ?? 512) * scaleRatio;
+      const radius = (activeFrame.circleRadius ?? 512) * scaleRatio;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+    } else {
+      ctx.beginPath();
+      ctx.rect(0, 0, canvasWidth, 980 * scaleRatio);
+      ctx.closePath();
+      ctx.clip();
+    }
 
-    // Light subtle gradient placeholder
     const grad = ctx.createLinearGradient(0, 0, 0, canvasHeight);
     grad.addColorStop(0, '#E5F6FF');
     grad.addColorStop(0.65, '#D5EDFF');
     grad.addColorStop(1, '#FFF5FA');
     ctx.fillStyle = grad;
     ctx.fill();
-
     ctx.restore();
   }
 
-  // 4. Draw foreground event artwork overlay ("Best Wishes From" frame)
+  // 4. Draw foreground event artwork overlay
   if (overlayImage && overlayImage.complete) {
     ctx.save();
     ctx.imageSmoothingEnabled = true;
@@ -248,13 +383,13 @@ export function renderFrameComposition(
     ctx.restore();
   }
 
-  // 5. Render auto-fitting Custom Name exactly centered inside "BEST WISHES FROM" purple pill
-  const boxCenterX = 512 * scaleRatio; // Exact horizontal center of pill and canvas
-  const boxCenterY = 936.5 * scaleRatio; // Exact vertical center of purple pill (bounds: y=896 to y=975)
-  const boxMaxWidth = 440 * scaleRatio; // Usable width between ribbon ends (x=295 to x=735)
-  const boxMaxHeight = 76 * scaleRatio; // Usable height inside purple pill
+  // 5. Render auto-fitting Custom Name inside purple pill (if supported by active frame)
+  if (activeFrame.hasNameInput && photoState.customName && photoState.customName.trim()) {
+    const boxCenterX = activeFrame.pillCenterX * scaleRatio;
+    const boxCenterY = activeFrame.pillCenterY * scaleRatio;
+    const boxMaxWidth = activeFrame.pillMaxWidth * scaleRatio;
+    const boxMaxHeight = activeFrame.pillMaxHeight * scaleRatio;
 
-  if (photoState.customName && photoState.customName.trim()) {
     renderCustomNameText(
       ctx,
       photoState.customName,
@@ -266,8 +401,12 @@ export function renderFrameComposition(
     );
   }
 
-  // 6. Optional full golden circular border if enabled by user
-  if (photoState.showGoldenBorder) {
+  // 6. Optional full golden circular border if enabled by user (for square frames)
+  if (photoState.showGoldenBorder && activeFrame.orientation === 'square') {
+    const cx = (activeFrame.circleCenterX ?? 512) * scaleRatio;
+    const cy = (activeFrame.circleCenterY ?? 512) * scaleRatio;
+    const radius = (activeFrame.circleRadius ?? 512) * scaleRatio;
+
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, radius - (3 * scaleRatio), 0, Math.PI * 2);
@@ -281,15 +420,16 @@ export function renderFrameComposition(
 }
 
 /**
- * Creates high-resolution 1024x1024 PNG blob from the current photo state.
+ * Creates high-resolution PNG blob from the current photo state and active frame.
  */
 export async function generateHighResBlob(
   photoState: PhotoState,
-  overlayImage: HTMLImageElement
+  overlayImage: HTMLImageElement,
+  activeFrame: FrameOption = getFrameById(photoState.selectedFrameId)
 ): Promise<Blob> {
   const offscreenCanvas = document.createElement('canvas');
-  offscreenCanvas.width = FRAME_CONFIG.width;
-  offscreenCanvas.height = FRAME_CONFIG.height;
+  offscreenCanvas.width = activeFrame.width;
+  offscreenCanvas.height = activeFrame.height;
 
   const ctx = offscreenCanvas.getContext('2d', { willReadFrequently: false });
   if (!ctx) {
@@ -300,8 +440,9 @@ export async function generateHighResBlob(
     ctx,
     photoState,
     overlayImage,
-    FRAME_CONFIG.width,
-    FRAME_CONFIG.height
+    activeFrame,
+    activeFrame.width,
+    activeFrame.height
   );
 
   return new Promise((resolve, reject) => {
@@ -331,7 +472,6 @@ export function triggerFileDownload(blob: Blob, filename = 'Konkani-Music-Conven
   anchor.click();
   document.body.removeChild(anchor);
 
-  // Clean up object URL after a brief delay
   setTimeout(() => {
     URL.revokeObjectURL(downloadUrl);
   }, 2000);
